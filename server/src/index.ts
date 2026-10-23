@@ -69,29 +69,29 @@ app.use('/api/settings', settingsRouter);
 // Manejador centralizado de errores
 app.use(errorHandler);
 
-// Iniciar servidor
-const port = config.port;
-const server = app.listen(port, async () => {
-  console.log(`🚀 Servidor SocialCount Analytics ejecutándose en http://localhost:${port}`);
-  console.log(`📡 Entorno: ${config.nodeEnv} | Modo Demo: ${config.demoModeDefault ? 'ACTIVO' : 'INACTIVO'}`);
+// Iniciar servidor (solo en entornos tradicionales con puerto, omitido en Vercel Serverless)
+if (!process.env.VERCEL) {
+  const port = config.port;
+  const server = app.listen(port, async () => {
+    console.log(`🚀 Servidor SocialCount Analytics ejecutándose en http://localhost:${port}`);
+    console.log(`📡 Entorno: ${config.nodeEnv} | Modo Demo: ${config.demoModeDefault ? 'ACTIVO' : 'INACTIVO'}`);
 
-  // Sembrar datos de demostración si la base de datos está vacía
-  try {
-    const seedResult = await seedDemoDataIfNeeded();
-    if (seedResult.seeded) {
-      console.log(`🌱 ${seedResult.message}`);
+    try {
+      const seedResult = await seedDemoDataIfNeeded();
+      if (seedResult.seeded) {
+        console.log(`🌱 ${seedResult.message}`);
+      }
+    } catch (seedErr: any) {
+      console.warn('[Seed Check]:', seedErr.message);
     }
-  } catch (seedErr: any) {
-    console.warn('[Seed Check]:', seedErr.message);
-  }
-});
-
-// Cierre controlado
-process.on('SIGTERM', () => {
-  console.log('Cerrando servidor...');
-  server.close(() => {
-    console.log('Servidor finalizado.');
   });
-});
+
+  process.on('SIGTERM', () => {
+    console.log('Cerrando servidor...');
+    server.close(() => {
+      console.log('Servidor finalizado.');
+    });
+  });
+}
 
 export default app;

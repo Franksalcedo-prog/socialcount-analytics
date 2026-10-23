@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "name": "socialcount-analytics",
+  "buildCommand": "npm run vercel-build",
+  "outputDirectory": "client/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
