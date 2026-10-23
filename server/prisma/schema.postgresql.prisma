@@ -1,0 +1,163 @@
+// Prisma Schema para PostgreSQL (Producción)
+// Para activar: npm run db:use-postgres
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String          @id @default(uuid())
+  email        String          @unique
+  name         String
+  passwordHash String
+  avatarUrl    String?
+  role         String          @default("ADMIN")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  accounts     SocialAccount[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model SocialAccount {
+  id                   String          @id @default(uuid())
+  userId               String
+  user                 User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform             String          // "FACEBOOK" | "INSTAGRAM"
+  externalId           String          // ID de Meta
+  name                 String
+  username             String?
+  profilePictureUrl    String?
+  encryptedAccessToken String          // AES-256-GCM
+  tokenExpiresAt       DateTime?
+  tokenStatus          String          @default("ACTIVE")
+  permissions          String          @default("[]")
+  isMonitored          Boolean         @default(true)
+  lastSyncAt           DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  posts                SocialPost[]
+  comments             SocialComment[]
+  syncJobs             SyncJob[]
+
+  @@unique([platform, externalId])
+  @@index([userId])
+  @@index([platform])
+  @@index([tokenStatus])
+  @@map("social_accounts")
+}
+
+model SocialPost {
+  id                   String          @id @default(uuid())
+  socialAccountId      String
+  socialAccount        SocialAccount   @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  platform             String          // "FACEBOOK" | "INSTAGRAM"
+  externalId           String
+  permalink            String?
+  message              String?
+  mediaType            String?
+  mediaUrl             String?
+  publishedAt          DateTime
+  apiCommentsCount     Int             @default(0)
+  repliesCount         Int             @default(0)
+  totalStoredComments  Int             @default(0)
+  lastSyncAt           DateTime        @default(now())
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  comments             SocialComment[]
+
+  @@unique([platform, externalId])
+  @@index([socialAccountId])
+  @@index([platform])
+  @@index([publishedAt])
+  @@map("social_posts")
+}
+
+model SocialComment {
+  id               String        @id @default(uuid())
+  postId           String
+  post             SocialPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  socialAccountId  String
+  socialAccount    SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  platform         String
+  externalId       String
+  parentCommentId  String?
+  authorName       String?
+  authorExternalId String?
+  authorProfilePic String?
+  text             String
+  commentDate      DateTime
+  isReply          Boolean       @default(false)
+  replyCount       Int           @default(0)
+  status           String        @default("VERIFIED")
+  capturedAt       DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@unique([platform, externalId])
+  @@index([postId])
+  @@index([socialAccountId])
+  @@index([platform])
+  @@index([commentDate])
+  @@index([parentCommentId])
+  @@index([isReply])
+  @@map("social_comments")
+}
+
+model SyncJob {
+  id               String         @id @default(uuid())
+  socialAccountId  String?
+  socialAccount    SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: SetNull)
+  triggerSource    String         @default("MANUAL")
+  status           String         @default("QUEUED")
+  startedAt        DateTime       @default(now())
+  completedAt      DateTime?
+  durationMs       Int?
+  postsProcessed   Int            @default(0)
+  commentsFetched  Int            @default(0)
+  commentsAdded    Int            @default(0)
+  commentsUpdated  Int            @default(0)
+  errorSummary     String?
+  createdAt        DateTime       @default(now())
+  logs             SyncLog[]
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("sync_jobs")
+}
+
+model SyncLog {
+  id        String   @id @default(uuid())
+  syncJobId String
+  syncJob   SyncJob  @relation(fields: [syncJobId], references: [id], onDelete: Cascade)
+  level     String
+  message   String
+  metadata  String?
+  timestamp DateTime @default(now())
+
+  @@index([syncJobId])
+  @@index([level])
+  @@map("sync_logs")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  details   String
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
