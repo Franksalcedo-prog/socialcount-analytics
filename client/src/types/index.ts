@@ -33,6 +33,10 @@ export interface SocialPost {
   repliesCount: number;
   totalStoredComments: number;
   lastSyncAt: string;
+  topCommenter?: { name: string; count: number } | null;
+  topMentioned?: { username: string; count: number } | null;
+  commentersRanking?: Array<{ name: string; count: number }>;
+  mentionsRanking?: Array<{ username: string; count: number }>;
   account: {
     name: string;
     username: string | null;
@@ -96,6 +100,8 @@ export interface DashboardMetrics {
     commentsCount: number;
     repliesCount: number;
     accountName: string;
+    topCommenter?: { name: string; count: number } | null;
+    topMentioned?: { username: string; count: number } | null;
   }>;
   weekdayActivity: Array<{
     day: string;

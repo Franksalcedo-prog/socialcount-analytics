@@ -42,6 +42,8 @@ export interface DashboardMetrics {
     commentsCount: number;
     repliesCount: number;
     accountName: string;
+    topCommenter?: { name: string; count: number } | null;
+    topMentioned?: { username: string; count: number } | null;
   }>;
   weekdayActivity: Array<{
     day: string;
@@ -201,22 +203,51 @@ export class AnalyticsService {
       where: postWhere,
       include: {
         socialAccount: { select: { name: true } },
+        comments: {
+          select: {
+            authorName: true,
+            text: true,
+          },
+        },
       },
       orderBy: { totalStoredComments: 'desc' },
       take: 5,
     });
 
-    const topPosts = topPostsRecords.map((p) => ({
-      id: p.id,
-      platform: p.platform,
-      message: p.message,
-      mediaUrl: p.mediaUrl,
-      permalink: p.permalink,
-      publishedAt: p.publishedAt,
-      commentsCount: p.totalStoredComments,
-      repliesCount: p.repliesCount,
-      accountName: p.socialAccount?.name || 'Desconocida',
-    }));
+    const mentionRegex = /@([a-zA-Z0-9._]+)/g;
+
+    const topPosts = topPostsRecords.map((p) => {
+      const authorCounts: Record<string, number> = {};
+      const mentionCounts: Record<string, number> = {};
+
+      for (const c of p.comments) {
+        if (c.authorName) {
+          authorCounts[c.authorName] = (authorCounts[c.authorName] || 0) + 1;
+        }
+        let match;
+        while ((match = mentionRegex.exec(c.text)) !== null) {
+          const handle = `@${match[1]}`;
+          mentionCounts[handle] = (mentionCounts[handle] || 0) + 1;
+        }
+      }
+
+      const sortedAuthors = Object.entries(authorCounts).sort((a, b) => b[1] - a[1]);
+      const sortedMentions = Object.entries(mentionCounts).sort((a, b) => b[1] - a[1]);
+
+      return {
+        id: p.id,
+        platform: p.platform,
+        message: p.message,
+        mediaUrl: p.mediaUrl,
+        permalink: p.permalink,
+        publishedAt: p.publishedAt,
+        commentsCount: p.totalStoredComments,
+        repliesCount: p.repliesCount,
+        accountName: p.socialAccount?.name || 'Desconocida',
+        topCommenter: sortedAuthors.length > 0 ? { name: sortedAuthors[0][0], count: sortedAuthors[0][1] } : null,
+        topMentioned: sortedMentions.length > 0 ? { username: sortedMentions[0][0], count: sortedMentions[0][1] } : null,
+      };
+    });
 
     // 11. Actividad por día de la semana (Lunes a Domingo)
     const weekdaysNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];

@@ -14,6 +14,8 @@ interface TopPostsRankingProps {
     commentsCount: number;
     repliesCount: number;
     accountName: string;
+    topCommenter?: { name: string; count: number } | null;
+    topMentioned?: { username: string; count: number } | null;
   }>;
   onSelectPost?: (postId: string) => void;
 }
@@ -78,6 +80,13 @@ export const TopPostsRanking: React.FC<TopPostsRankingProps> = ({ posts, onSelec
                   <p className="text-xs text-slate-800 font-medium line-clamp-1 group-hover:text-brand-600 transition-colors">
                     {post.message || 'Publicación sin texto (contenido multimedia)'}
                   </p>
+                  {post.topCommenter && (
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-amber-800">
+                      <span className="font-semibold bg-amber-50 border border-amber-200/90 px-1.5 py-0.5 rounded">
+                        👤 Más comentada: {post.topCommenter.name} ({post.topCommenter.count})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

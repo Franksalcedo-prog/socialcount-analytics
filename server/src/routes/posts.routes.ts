@@ -54,29 +54,58 @@ postsRouter.get('/', async (req: Request, res: Response) => {
             profilePictureUrl: true,
           },
         },
+        comments: {
+          select: {
+            authorName: true,
+            text: true,
+          },
+        },
       },
     });
 
+    const mentionRegex = /@([a-zA-Z0-9._]+)/g;
+
     res.json({
-      data: posts.map((p) => ({
-        id: p.id,
-        platform: p.platform,
-        externalId: p.externalId,
-        message: p.message,
-        mediaType: p.mediaType,
-        mediaUrl: p.mediaUrl,
-        permalink: p.permalink,
-        publishedAt: p.publishedAt,
-        apiCommentsCount: p.apiCommentsCount,
-        repliesCount: p.repliesCount,
-        totalStoredComments: p.totalStoredComments,
-        lastSyncAt: p.lastSyncAt,
-        account: {
-          name: p.socialAccount.name,
-          username: p.socialAccount.username,
-          profilePictureUrl: p.socialAccount.profilePictureUrl,
-        },
-      })),
+      data: posts.map((p) => {
+        const authorCounts: Record<string, number> = {};
+        const mentionCounts: Record<string, number> = {};
+
+        for (const c of p.comments) {
+          if (c.authorName) {
+            authorCounts[c.authorName] = (authorCounts[c.authorName] || 0) + 1;
+          }
+          let match;
+          while ((match = mentionRegex.exec(c.text)) !== null) {
+            const handle = `@${match[1]}`;
+            mentionCounts[handle] = (mentionCounts[handle] || 0) + 1;
+          }
+        }
+
+        const sortedAuthors = Object.entries(authorCounts).sort((a, b) => b[1] - a[1]);
+        const sortedMentions = Object.entries(mentionCounts).sort((a, b) => b[1] - a[1]);
+
+        return {
+          id: p.id,
+          platform: p.platform,
+          externalId: p.externalId,
+          message: p.message,
+          mediaType: p.mediaType,
+          mediaUrl: p.mediaUrl,
+          permalink: p.permalink,
+          publishedAt: p.publishedAt,
+          apiCommentsCount: p.apiCommentsCount,
+          repliesCount: p.repliesCount,
+          totalStoredComments: p.totalStoredComments,
+          lastSyncAt: p.lastSyncAt,
+          topCommenter: sortedAuthors.length > 0 ? { name: sortedAuthors[0][0], count: sortedAuthors[0][1] } : null,
+          topMentioned: sortedMentions.length > 0 ? { username: sortedMentions[0][0], count: sortedMentions[0][1] } : null,
+          account: {
+            name: p.socialAccount.name,
+            username: p.socialAccount.username,
+            profilePictureUrl: p.socialAccount.profilePictureUrl,
+          },
+        };
+      }),
       pagination: {
         page,
         pageSize,
@@ -91,7 +120,7 @@ postsRouter.get('/', async (req: Request, res: Response) => {
 
 /**
  * GET /api/posts/:id
- * Detalle completo de una publicación y sus comentarios paginados
+ * Detalle completo de una publicación y sus comentarios paginados con top comentarista
  */
 postsRouter.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -108,7 +137,7 @@ postsRouter.get('/:id', async (req: Request, res: Response) => {
         },
         comments: {
           orderBy: { commentDate: 'desc' },
-          take: 50,
+          take: 100,
         },
       },
     });
@@ -118,7 +147,36 @@ postsRouter.get('/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    res.json(post);
+    const authorCounts: Record<string, number> = {};
+    const mentionCounts: Record<string, number> = {};
+    const mentionRegex = /@([a-zA-Z0-9._]+)/g;
+
+    for (const c of post.comments) {
+      if (c.authorName) {
+        authorCounts[c.authorName] = (authorCounts[c.authorName] || 0) + 1;
+      }
+      let match;
+      while ((match = mentionRegex.exec(c.text)) !== null) {
+        const handle = `@${match[1]}`;
+        mentionCounts[handle] = (mentionCounts[handle] || 0) + 1;
+      }
+    }
+
+    const sortedAuthors = Object.entries(authorCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+
+    const sortedMentions = Object.entries(mentionCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([username, count]) => ({ username, count }));
+
+    res.json({
+      ...post,
+      topCommenter: sortedAuthors.length > 0 ? sortedAuthors[0] : null,
+      topMentioned: sortedMentions.length > 0 ? sortedMentions[0] : null,
+      commentersRanking: sortedAuthors.slice(0, 5),
+      mentionsRanking: sortedMentions.slice(0, 5),
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

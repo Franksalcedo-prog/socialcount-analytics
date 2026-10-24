@@ -40,6 +40,7 @@
   - [x] 5.10 Vista de Informes y Exportación CSV <!-- id: 5.10 -->
   - [x] 5.11 Vista de Configuración (Meta App ID, App Secret, Webhooks, frecuencia de cron, modo de demostración) <!-- id: 5.11 -->
   - [x] 5.12 Manejo integral de estados (sin cuentas, cargando, sincronizando, permisos insuficientes, token expirado, modo demo) <!-- id: 5.12 -->
+  - [x] 5.13 Detección y visualización de la persona más comentada / activa y más mencionada por publicación en Grid, Tabla, Drawer y Dashboard <!-- id: 5.13 -->
 
 - [x] 6. Pruebas Automatizadas y Validación <!-- id: 6 -->
   - [x] 6.1 Pruebas unitarias de cifrado AES-256-GCM <!-- id: 6.1 -->

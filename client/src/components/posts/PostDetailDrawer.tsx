@@ -8,6 +8,8 @@ import {
   Layers,
   CornerDownRight,
   User,
+  Award,
+  AtSign,
 } from 'lucide-react';
 import { SocialPost, SocialComment } from '../../types';
 import { Badge } from '../ui/Badge';
@@ -124,6 +126,64 @@ export const PostDetailDrawer: React.FC<PostDetailDrawerProps> = ({
                   </span>
                 </div>
               </div>
+
+              {/* Persona más comentada / activa */}
+              {post.topCommenter && (
+                <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200/90 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold">
+                        <Award className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800/80 block">
+                          Persona más comentada / activa
+                        </span>
+                        <h5 className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
+                          {post.topCommenter.name}
+                        </h5>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 bg-amber-200/80 text-amber-900 text-xs font-bold rounded-lg">
+                      {post.topCommenter.count} {post.topCommenter.count === 1 ? 'comentario' : 'comentarios'}
+                    </span>
+                  </div>
+
+                  {/* Si hay personas mencionadas */}
+                  {post.topMentioned && (
+                    <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-xs">
+                      <span className="text-amber-900/80 flex items-center gap-1 text-[11px]">
+                        <AtSign className="w-3.5 h-3.5 text-amber-700" />
+                        Persona más mencionada en comentarios:
+                      </span>
+                      <span className="font-semibold text-amber-950 bg-amber-100/70 px-2 py-0.5 rounded text-[11px]">
+                        {post.topMentioned.username} ({post.topMentioned.count})
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Top participantes ranking */}
+                  {post.commentersRanking && post.commentersRanking.length > 1 && (
+                    <div className="pt-2 border-t border-amber-200/60">
+                      <span className="text-[10px] font-semibold text-amber-800 uppercase block mb-1.5">
+                        Top participantes en este post
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {post.commentersRanking.map((c, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1 text-[11px] bg-white/80 border border-amber-200/70 px-2 py-0.5 rounded-md text-amber-900"
+                          >
+                            <span className="text-[10px] font-bold text-amber-600">#{idx + 1}</span>
+                            <span className="font-medium">{c.name}</span>
+                            <span className="text-amber-700/70 text-[10px]">({c.count})</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Published Date */}
               <div className="flex items-center gap-2 text-xs text-slate-500">

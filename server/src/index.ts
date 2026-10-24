@@ -24,10 +24,16 @@ app.use(
   })
 );
 
-// CORS explícito para el frontend
+// CORS adaptativo para frontend local y producción en Vercel
 app.use(
   cors({
-    origin: [config.clientOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.endsWith('.vercel.app') || origin === config.clientOrigin) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
   })
 );
@@ -46,14 +52,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', apiRateLimiter);
 
 // Healthcheck de infraestructura
-app.get('/health', (_req, res) => {
+const healthResponse = (_req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     app: 'SocialCount Analytics API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
-});
+};
+app.get('/health', healthResponse);
+app.get('/api/health', healthResponse);
 
 // Rutas de la API
 app.use('/api/oauth', oauthRouter);

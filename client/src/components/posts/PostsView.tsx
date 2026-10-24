@@ -8,6 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
+  User,
+  AtSign,
 } from 'lucide-react';
 import { SocialPost, SocialComment } from '../../types';
 import { apiService } from '../../services/api';
@@ -191,6 +193,30 @@ export const PostsView: React.FC = () => {
                     <p className="text-xs text-slate-800 line-clamp-2 leading-relaxed">
                       {post.message || 'Contenido multimedia sin texto.'}
                     </p>
+
+                    {/* Persona más comentada / activa */}
+                    {post.topCommenter && (
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-[11px] bg-amber-50 border border-amber-200/90 text-amber-950 px-2.5 py-1 rounded-lg">
+                          <span className="flex items-center gap-1.5 font-medium truncate">
+                            <User className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span className="text-slate-500 text-[10px]">Más comentada:</span>
+                            <strong className="truncate text-amber-900">{post.topCommenter.name}</strong>
+                          </span>
+                          <span className="font-bold text-[10px] bg-amber-200/80 text-amber-900 px-1.5 py-0.5 rounded-full shrink-0">
+                            {post.topCommenter.count} {post.topCommenter.count === 1 ? 'comentario' : 'comentarios'}
+                          </span>
+                        </div>
+                        {post.topMentioned && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-blue-900 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-md">
+                            <AtSign className="w-3 h-3 text-blue-500 shrink-0" />
+                            <span className="text-slate-500">Más mencionada:</span>
+                            <strong className="font-semibold text-blue-950">{post.topMentioned.username}</strong>
+                            <span className="text-slate-400">({post.topMentioned.count})</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -227,6 +253,7 @@ export const PostsView: React.FC = () => {
                   <th className="py-3 px-4">Plataforma</th>
                   <th className="py-3 px-4">Cuenta</th>
                   <th className="py-3 px-4">Descripción</th>
+                  <th className="py-3 px-4">Persona más comentada</th>
                   <th className="py-3 px-4">Fecha</th>
                   <th className="py-3 px-4 text-right">Comentarios</th>
                   <th className="py-3 px-4 text-center">Acciones</th>
@@ -251,6 +278,26 @@ export const PostsView: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 max-w-xs truncate text-slate-800">
                         {post.message || 'Sin texto'}
+                      </td>
+                      <td className="py-3 px-4">
+                        {post.topCommenter ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-amber-600" />
+                              {post.topCommenter.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {post.topCommenter.count} {post.topCommenter.count === 1 ? 'comentario' : 'comentarios'}
+                              {post.topMentioned && (
+                                <span className="text-blue-600 font-medium ml-1">
+                                  • {post.topMentioned.username} ({post.topMentioned.count})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">Sin comentarios</span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-slate-400">
                         {new Date(post.publishedAt).toLocaleDateString('es-ES')}
