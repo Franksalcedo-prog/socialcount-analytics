@@ -3,8 +3,22 @@ import { prisma } from '../db/prisma.js';
 import { voteEngineService } from '../services/vote-engine.service.js';
 import { csvImportService } from '../services/csv-import.service.js';
 import { seedEbanoVotingDataIfNeeded } from '../services/ebano-voting-seed.service.js';
+import { schemaMigrationService } from '../services/schema-migration.service.js';
 
 export const votingRouter = Router();
+
+/**
+ * ALL /api/voting/migrate
+ * Disparador de migración de esquema e índices para Supabase / PostgreSQL
+ */
+votingRouter.all('/migrate', async (_req: Request, res: Response) => {
+  try {
+    const result = await schemaMigrationService.ensureTablesExist();
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 /**
  * GET /api/voting/dashboard
@@ -12,6 +26,7 @@ export const votingRouter = Router();
  */
 votingRouter.get('/dashboard', async (req: Request, res: Response) => {
   try {
+    await schemaMigrationService.ensureTablesExist();
     let totalCategories = await prisma.category.count();
     if (totalCategories === 0) {
       await seedEbanoVotingDataIfNeeded();

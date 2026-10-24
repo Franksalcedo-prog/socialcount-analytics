@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../db/prisma.js';
 import { PaginationQuerySchema } from '../schemas/index.js';
+import { schemaMigrationService } from '../services/schema-migration.service.js';
 
 export const postsRouter = Router();
 
@@ -10,6 +11,7 @@ export const postsRouter = Router();
  */
 postsRouter.get('/', async (req: Request, res: Response) => {
   try {
+    await schemaMigrationService.ensureTablesExist();
     const validated = PaginationQuerySchema.parse(req.query);
     const { page, pageSize, search, platform, accountId, startDate, endDate, sortBy, sortOrder } = validated;
 

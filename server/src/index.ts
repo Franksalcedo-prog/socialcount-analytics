@@ -65,6 +65,20 @@ const healthResponse = (_req: express.Request, res: express.Response) => {
 app.get('/health', healthResponse);
 app.get('/api/health', healthResponse);
 
+import { schemaMigrationService } from './services/schema-migration.service.js';
+
+// Auto-migración en Vercel Serverless
+app.use(async (_req, _res, next) => {
+  if (process.env.VERCEL) {
+    try {
+      await schemaMigrationService.ensureTablesExist();
+    } catch (err: any) {
+      console.warn('[Auto-Migrate]:', err.message);
+    }
+  }
+  next();
+});
+
 // Rutas de la API
 app.use('/api/oauth', oauthRouter);
 app.use('/api/accounts', accountsRouter);
