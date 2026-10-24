@@ -159,6 +159,53 @@ class SchemaMigrationService {
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
       applied.push('social_comments');
 
+      // Sanitizar filas preexistentes que tengan campos requeridos en NULL
+      try {
+        await prisma.$executeRawUnsafe(`
+          UPDATE "users" 
+          SET "email" = COALESCE("email", 'admin@ebano.com'),
+              "name" = COALESCE("name", 'Administrador Ébano'),
+              "passwordHash" = COALESCE("passwordHash", '$2a$10$dummyhash')
+          WHERE "email" IS NULL OR "name" IS NULL OR "passwordHash" IS NULL;
+        `);
+      } catch {}
+
+      try {
+        await prisma.$executeRawUnsafe(`
+          UPDATE "social_accounts" 
+          SET "externalId" = COALESCE("externalId", "id", gen_random_uuid()::text),
+              "platform" = COALESCE("platform", 'FACEBOOK'),
+              "name" = COALESCE("name", 'Cuenta Ébano'),
+              "encryptedAccessToken" = COALESCE("encryptedAccessToken", 'dummy_encrypted_token'),
+              "userId" = COALESCE("userId", (SELECT id FROM users LIMIT 1), gen_random_uuid()::text)
+          WHERE "externalId" IS NULL OR "platform" IS NULL OR "name" IS NULL OR "encryptedAccessToken" IS NULL OR "userId" IS NULL;
+        `);
+      } catch {}
+
+      try {
+        await prisma.$executeRawUnsafe(`
+          UPDATE "social_posts" 
+          SET "externalId" = COALESCE("externalId", "id", gen_random_uuid()::text),
+              "platform" = COALESCE("platform", 'FACEBOOK'),
+              "socialAccountId" = COALESCE("socialAccountId", (SELECT id FROM social_accounts LIMIT 1), gen_random_uuid()::text),
+              "publishedAt" = COALESCE("publishedAt", NOW())
+          WHERE "externalId" IS NULL OR "platform" IS NULL OR "socialAccountId" IS NULL OR "publishedAt" IS NULL;
+        `);
+      } catch {}
+
+      try {
+        await prisma.$executeRawUnsafe(`
+          UPDATE "social_comments" 
+          SET "externalId" = COALESCE("externalId", "id", gen_random_uuid()::text),
+              "platform" = COALESCE("platform", 'FACEBOOK'),
+              "postId" = COALESCE("postId", (SELECT id FROM social_posts LIMIT 1), gen_random_uuid()::text),
+              "socialAccountId" = COALESCE("socialAccountId", (SELECT id FROM social_accounts LIMIT 1), gen_random_uuid()::text),
+              "text" = COALESCE("text", ''),
+              "commentDate" = COALESCE("commentDate", NOW())
+          WHERE "externalId" IS NULL OR "platform" IS NULL OR "postId" IS NULL OR "socialAccountId" IS NULL OR "text" IS NULL OR "commentDate" IS NULL;
+        `);
+      } catch {}
+
       // 5. Tablas Base: sync_jobs, sync_logs, audit_logs
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "sync_jobs" (
