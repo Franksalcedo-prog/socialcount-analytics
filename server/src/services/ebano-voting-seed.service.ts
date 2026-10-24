@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma.js';
 import { voteEngineService } from './vote-engine.service.js';
+import { seedDemoDataIfNeeded } from './demo-data.service.js';
 
 export async function seedEbanoVotingDataIfNeeded(): Promise<{ seeded: boolean; message: string }> {
   const existingCategories = await prisma.category.count();
@@ -7,9 +8,15 @@ export async function seedEbanoVotingDataIfNeeded(): Promise<{ seeded: boolean; 
     return { seeded: false, message: 'Categorías de votación ya inicializadas.' };
   }
 
-  // 1. Obtener cuentas y posts existentes
-  const fbAccount = await prisma.socialAccount.findFirst({ where: { platform: 'FACEBOOK' } });
-  const igAccount = await prisma.socialAccount.findFirst({ where: { platform: 'INSTAGRAM' } });
+  // 1. Obtener cuentas y posts existentes (crearlas si no existen)
+  let fbAccount = await prisma.socialAccount.findFirst({ where: { platform: 'FACEBOOK' } });
+  let igAccount = await prisma.socialAccount.findFirst({ where: { platform: 'INSTAGRAM' } });
+
+  if (!fbAccount || !igAccount) {
+    await seedDemoDataIfNeeded();
+    fbAccount = await prisma.socialAccount.findFirst({ where: { platform: 'FACEBOOK' } });
+    igAccount = await prisma.socialAccount.findFirst({ where: { platform: 'INSTAGRAM' } });
+  }
 
   if (!fbAccount || !igAccount) {
     return { seeded: false, message: 'Se requieren cuentas de Facebook e Instagram para inicializar votaciones.' };

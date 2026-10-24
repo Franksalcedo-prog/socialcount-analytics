@@ -9,8 +9,14 @@ import { seedEbanoVotingDataIfNeeded } from './ebano-voting-seed.service.js';
 class SchemaMigrationService {
   private migrated = false;
 
-  public async ensureTablesExist(): Promise<{ success: boolean; message: string; applied: string[] }> {
-    if (this.migrated) {
+  public async ensureTablesExist(force = false): Promise<{ success: boolean; message: string; applied: string[] }> {
+    if (this.migrated && !force) {
+      try {
+        const count = await prisma.category.count();
+        if (count === 0) {
+          await seedEbanoVotingDataIfNeeded();
+        }
+      } catch {}
       return { success: true, message: 'Migración ya ejecutada previamente en esta instancia.', applied: [] };
     }
 

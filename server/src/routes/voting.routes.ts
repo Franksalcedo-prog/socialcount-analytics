@@ -11,10 +11,12 @@ export const votingRouter = Router();
  * ALL /api/voting/migrate
  * Disparador de migración de esquema e índices para Supabase / PostgreSQL
  */
-votingRouter.all('/migrate', async (_req: Request, res: Response) => {
+votingRouter.all('/migrate', async (req: Request, res: Response) => {
   try {
-    const result = await schemaMigrationService.ensureTablesExist();
-    res.json(result);
+    const force = req.query.force === 'true' || req.body?.force === true;
+    const result = await schemaMigrationService.ensureTablesExist(force);
+    const seedResult = await seedEbanoVotingDataIfNeeded();
+    res.json({ ...result, seedResult });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
