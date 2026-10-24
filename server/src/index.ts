@@ -13,7 +13,9 @@ import { syncRouter } from './routes/sync.routes.js';
 import { webhooksRouter } from './routes/webhooks.routes.js';
 import { exportRouter } from './routes/export.routes.js';
 import { settingsRouter } from './routes/settings.routes.js';
+import { votingRouter } from './routes/voting.routes.js';
 import { seedDemoDataIfNeeded } from './services/demo-data.service.js';
+import { seedEbanoVotingDataIfNeeded } from './services/ebano-voting-seed.service.js';
 
 const app = express();
 
@@ -73,6 +75,7 @@ app.use('/api/sync', syncRouter);
 app.use('/api/webhooks', webhooksRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/voting', votingRouter);
 
 // Manejador centralizado de errores
 app.use(errorHandler);
@@ -88,6 +91,10 @@ if (!process.env.VERCEL) {
       const seedResult = await seedDemoDataIfNeeded();
       if (seedResult.seeded) {
         console.log(`🌱 ${seedResult.message}`);
+      }
+      const votingResult = await seedEbanoVotingDataIfNeeded();
+      if (votingResult.seeded) {
+        console.log(`👑 ${votingResult.message}`);
       }
     } catch (seedErr: any) {
       console.warn('[Seed Check]:', seedErr.message);

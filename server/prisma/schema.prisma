@@ -69,6 +69,8 @@ model SocialPost {
   repliesCount         Int             @default(0) // Total de respuestas recuperadas
   totalStoredComments  Int             @default(0) // Comentarios efectivamente guardados en la BD
   lastSyncAt           DateTime        @default(now())
+  categoryId           String?
+  category             Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 
@@ -78,6 +80,7 @@ model SocialPost {
   @@index([socialAccountId])
   @@index([platform])
   @@index([publishedAt])
+  @@index([categoryId])
   @@map("social_posts")
 }
 
@@ -100,6 +103,8 @@ model SocialComment {
   status           String        @default("VERIFIED") // VERIFIED, PENDING_SYNC, HIDDEN_BY_META, REMOVED
   capturedAt       DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+
+  voteRecord       VoteRecord?
 
   @@unique([platform, externalId])
   @@index([postId])
@@ -160,4 +165,81 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model Category {
+  id                    String        @id @default(uuid())
+  name                  String
+  slug                  String        @unique
+  edition               String        @default("2026")
+  description           String?
+  votingPolicy          String        @default("ONE_PER_USER_AND_CANDIDATE") // EVERY_VALID_COMMENT, ONE_PER_USER_AND_CANDIDATE, ONE_PER_USER_PER_CATEGORY
+  status                String        @default("PROVISIONAL") // PROVISIONAL, DEFINITIVE
+  allowMultipleMentions Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  candidates            Candidate[]
+  posts                 SocialPost[]
+
+  @@map("categories")
+}
+
+model Candidate {
+  id          String        @id @default(uuid())
+  categoryId  String
+  category    Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  number      Int?
+  aliasList   String        @default("[]") // JSON string: ["#camila", "@camila_ebano", "camila"]
+  photoUrl    String?
+  bio         String?
+  status      String        @default("ACTIVE") // ACTIVE, DISQUALIFIED
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  voteRecords VoteRecord[]
+
+  @@index([categoryId])
+  @@map("candidates")
+}
+
+model VoteRecord {
+  id              String          @id @default(uuid())
+  commentId       String          @unique
+  comment         SocialComment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  candidateId     String?
+  candidate       Candidate?      @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  normalizedText  String
+  textHash        String          // Hash para agrupamiento de comentarios repetidos
+  voteStatus      String          // VALID, DUPLICATE_USER, MULTI_MENTION, REPEATED_TEXT_SPAM, NO_CANDIDATE_MATCH, PENDING_REVIEW, MANUALLY_APPROVED, MANUALLY_REJECTED
+  discardReason   String?
+  manualNotes     String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  auditLogs       VoteAuditLog[]
+
+  @@index([candidateId])
+  @@index([voteStatus])
+  @@index([textHash])
+  @@map("vote_records")
+}
+
+model VoteAuditLog {
+  id                  String      @id @default(uuid())
+  voteRecordId        String
+  voteRecord          VoteRecord  @relation(fields: [voteRecordId], references: [id], onDelete: Cascade)
+  previousStatus      String
+  newStatus           String
+  previousCandidateId String?
+  newCandidateId      String?
+  changedBy           String
+  reason              String
+  createdAt           DateTime    @default(now())
+
+  @@index([voteRecordId])
+  @@map("vote_audit_logs")
 }

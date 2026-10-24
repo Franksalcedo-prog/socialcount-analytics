@@ -15,17 +15,37 @@ import { AccountsView } from './components/accounts/AccountsView';
 import { ReportsView } from './components/reports/ReportsView';
 import { SyncHistoryView } from './components/sync/SyncHistoryView';
 import { SettingsView } from './components/settings/SettingsView';
+import { VotingDashboardView } from './components/voting/VotingDashboardView';
+import { CategoryResultsView } from './components/voting/CategoryResultsView';
+import { VotesAuditView } from './components/voting/VotesAuditView';
+import { ContestManagementView } from './components/voting/ContestManagementView';
+import { CandidateDetailDrawer } from './components/voting/CandidateDetailDrawer';
 import { apiService } from './services/api';
 
 const AppContent: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
+  const [currentTab, setCurrentTab] = useState<NavTab>('voting-dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(true);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<string | null>(null);
 
+  // Estados para Drawer de Ficha de Participante y Selección de Categoría
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  const [isCandidateDrawerOpen, setIsCandidateDrawerOpen] = useState(false);
+  const [activeCategoryIdForResults, setActiveCategoryIdForResults] = useState<string | null>(null);
+
   const { showSuccessToast, lastSyncResult, dismissToast } = useSync();
   const { refreshKey } = useFilters();
+
+  const handleOpenCandidateDetail = (candidateId: string) => {
+    setSelectedCandidateId(candidateId);
+    setIsCandidateDrawerOpen(true);
+  };
+
+  const handleSelectCategory = (categoryId: string) => {
+    setActiveCategoryIdForResults(categoryId);
+    setCurrentTab('categories-results');
+  };
 
   // Comprobar estado inicial del sistema y timestamp de última sincronización
   useEffect(() => {
@@ -62,12 +82,28 @@ const AppContent: React.FC = () => {
   }, []);
 
   const sectionMeta: Record<NavTab, { title: string; subtitle: string }> = {
+    'voting-dashboard': {
+      title: 'Conteo y Métricas de Votos — Ébano',
+      subtitle: 'Consolidación oficial de votos provenientes de comentarios de Facebook e Instagram',
+    },
+    'categories-results': {
+      title: 'Resultados Oficiales por Categoría',
+      subtitle: 'Tabla comparativa, porcentajes, rankings y fórmulas consolidadas auditables',
+    },
+    'voting-audit': {
+      title: 'Auditoría y Validación de Votos',
+      subtitle: 'Control de comentarios repetidos, detección de votos inválidos y corrección manual',
+    },
+    'contest-mgmt': {
+      title: 'Gestión de Convocatorias y Cuentas',
+      subtitle: 'Administración de categorías, integrantes oficiales, reglas de conteo y posts vinculados',
+    },
     dashboard: {
       title: 'Panel General de Control',
       subtitle: 'Visión consolidada de comentarios de Facebook Pages e Instagram Profesional',
     },
     analytics: {
-      title: 'Analítica y Tendencias',
+      title: 'Analítica y Tendencias Meta',
       subtitle: 'Comportamiento de interacciones, comparativa entre plataformas y patrones',
     },
     posts: {
@@ -98,6 +134,24 @@ const AppContent: React.FC = () => {
 
   const renderCurrentView = () => {
     switch (currentTab) {
+      case 'voting-dashboard':
+        return (
+          <VotingDashboardView
+            onSelectCategory={handleSelectCategory}
+            onOpenCandidateDetail={handleOpenCandidateDetail}
+          />
+        );
+      case 'categories-results':
+        return (
+          <CategoryResultsView
+            initialCategoryId={activeCategoryIdForResults}
+            onOpenCandidateDetail={handleOpenCandidateDetail}
+          />
+        );
+      case 'voting-audit':
+        return <VotesAuditView />;
+      case 'contest-mgmt':
+        return <ContestManagementView />;
       case 'dashboard':
         return <DashboardOverview />;
       case 'analytics':
@@ -115,7 +169,12 @@ const AppContent: React.FC = () => {
       case 'settings':
         return <SettingsView />;
       default:
-        return <DashboardOverview />;
+        return (
+          <VotingDashboardView
+            onSelectCategory={handleSelectCategory}
+            onOpenCandidateDetail={handleOpenCandidateDetail}
+          />
+        );
     }
   };
 
@@ -152,6 +211,13 @@ const AppContent: React.FC = () => {
           </main>
         </div>
       </div>
+
+      {/* Drawer Ficha de Participante */}
+      <CandidateDetailDrawer
+        candidateId={selectedCandidateId}
+        isOpen={isCandidateDrawerOpen}
+        onClose={() => setIsCandidateDrawerOpen(false)}
+      />
 
       {/* Global Connect Modal */}
       <ConnectModal

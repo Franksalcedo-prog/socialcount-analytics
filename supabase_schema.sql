@@ -149,3 +149,83 @@ CREATE TABLE IF NOT EXISTS "audit_logs" (
 CREATE INDEX IF NOT EXISTS "idx_audit_user" ON "audit_logs"("userId");
 CREATE INDEX IF NOT EXISTS "idx_audit_action" ON "audit_logs"("action");
 CREATE INDEX IF NOT EXISTS "idx_audit_created" ON "audit_logs"("createdAt");
+
+-- 9. Tabla categories (Convocatorias y Categorías de Ébano)
+CREATE TABLE IF NOT EXISTS "categories" (
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "name" TEXT NOT NULL,
+    "slug" TEXT UNIQUE NOT NULL,
+    "edition" TEXT NOT NULL DEFAULT '2026',
+    "description" TEXT,
+    "votingPolicy" TEXT NOT NULL DEFAULT 'ONE_PER_USER_AND_CANDIDATE',
+    "status" TEXT NOT NULL DEFAULT 'PROVISIONAL',
+    "allowMultipleMentions" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Agregar categoryId a social_posts
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'categoryId') THEN
+        ALTER TABLE "social_posts" ADD COLUMN "categoryId" TEXT;
+        ALTER TABLE "social_posts" ADD CONSTRAINT "fk_post_category" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL;
+        CREATE INDEX "idx_post_category" ON "social_posts"("categoryId");
+    END IF;
+END $$;
+
+-- 10. Tabla candidates (Integrantes participantes)
+CREATE TABLE IF NOT EXISTS "candidates" (
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "categoryId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "number" INTEGER,
+    "aliasList" TEXT NOT NULL DEFAULT '[]',
+    "photoUrl" TEXT,
+    "bio" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "fk_candidate_category" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "idx_candidate_category" ON "candidates"("categoryId");
+
+-- 11. Tabla vote_records (Auditoría granular de comentarios/votos)
+CREATE TABLE IF NOT EXISTS "vote_records" (
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "commentId" TEXT UNIQUE NOT NULL,
+    "candidateId" TEXT,
+    "normalizedText" TEXT NOT NULL,
+    "textHash" TEXT NOT NULL,
+    "voteStatus" TEXT NOT NULL,
+    "discardReason" TEXT,
+    "manualNotes" TEXT,
+    "reviewedBy" TEXT,
+    "reviewedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "fk_vote_comment" FOREIGN KEY ("commentId") REFERENCES "social_comments"("id") ON DELETE CASCADE,
+    CONSTRAINT "fk_vote_candidate" FOREIGN KEY ("candidateId") REFERENCES "candidates"("id") ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS "idx_vote_candidate" ON "vote_records"("candidateId");
+CREATE INDEX IF NOT EXISTS "idx_vote_status" ON "vote_records"("voteStatus");
+CREATE INDEX IF NOT EXISTS "idx_vote_hash" ON "vote_records"("textHash");
+
+-- 12. Tabla vote_audit_logs (Trazabilidad de modificaciones manuales de votos)
+CREATE TABLE IF NOT EXISTS "vote_audit_logs" (
+    "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    "voteRecordId" TEXT NOT NULL,
+    "previousStatus" TEXT NOT NULL,
+    "newStatus" TEXT NOT NULL,
+    "previousCandidateId" TEXT,
+    "newCandidateId" TEXT,
+    "changedBy" TEXT NOT NULL,
+    "reason" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "fk_audit_vote" FOREIGN KEY ("voteRecordId") REFERENCES "vote_records"("id") ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "idx_audit_voteRecord" ON "vote_audit_logs"("voteRecordId");
+

@@ -53,3 +53,17 @@
   - [x] 7.1 README.md detallado con arquitectura, instalación y ejecución <!-- id: 7.1 -->
   - [x] 7.2 META_SETUP_GUIDE.md con paso a paso para configurar la App en Meta for Developers, permisos y webhooks <!-- id: 7.2 -->
   - [x] 7.3 Verificación final de funcionamiento en navegador <!-- id: 7.3 -->
+
+- [x] 8. Módulo Avanzado de Conteo, Consolidación y Análisis de Votos Ébano <!-- id: 8 -->
+  - [x] 8.1 Extensión de Base de Datos (Category, Candidate, VoteRecord, VoteAuditLog y vinculación con SocialPost) en Prisma y Supabase SQL <!-- id: 8.1 -->
+  - [x] 8.2 Motor de normalización, detección de repetidos, multi-mención y conteo de votos con políticas configurables <!-- id: 8.2 -->
+  - [x] 8.3 Importador de comentarios en archivo CSV para contingencia sin API <!-- id: 8.3 -->
+  - [x] 8.4 Controladores y Rutas API de Votación (`/api/voting/...`) con auditoría y recálculo masivo <!-- id: 8.4 -->
+  - [x] 8.5 Dashboard General de Resultados de Votación (tarjetas, comparativo FB/IG, barras de participantes y podio) <!-- id: 8.5 -->
+  - [x] 8.6 Vista de Resultados por Categoría (tabla comparativa oficial con % de participación, rankings y diferencias) <!-- id: 8.6 -->
+  - [x] 8.7 Vista/Ficha Detallada de Integrante (gráfico horizontal FB/IG/Total con valores exactos, desglose repetidos/descartados y evolución) <!-- id: 8.7 -->
+  - [x] 8.8 Vista de Gestión de Convocatoria (administración de categorías, candidatos/integrantes, alias y asociación de publicaciones) <!-- id: 8.8 -->
+  - [x] 8.9 Panel de Auditoría y Moderación Manual de Votos Dudosos <!-- id: 8.9 -->
+  - [x] 8.10 Exportador de Resultados Consolidados (CSV, Excel enriquecido e informe imprimible/PDF) <!-- id: 8.10 -->
+  - [x] 8.11 Seed y pruebas unitarias de conteo con casos límite (empates, cero votos, repetidos, multi-mención) <!-- id: 8.11 -->
+  - [x] 8.12 Compilación, despliegue a Vercel y push a GitHub <!-- id: 8.12 -->

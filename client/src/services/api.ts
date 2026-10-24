@@ -8,6 +8,12 @@ import {
   SystemSettingsInfo,
   PaginatedResponse,
   Platform,
+  CategoryItem,
+  CandidateItem,
+  CategoryResultData,
+  CandidateDetailData,
+  VotingDashboardData,
+  VotingCommentItem,
 } from '../types';
 
 const api = axios.create({
@@ -140,5 +146,102 @@ export const apiService = {
     if (params.endDate) query.set('endDate', params.endDate);
     if (params.search) query.set('search', params.search);
     return `/api/export/comments/csv?${query.toString()}`;
+  },
+
+  // ==========================================
+  // MÓDULO DE VOTACIÓN Y CONSOLIDACIÓN ÉBANO
+  // ==========================================
+
+  async getVotingDashboard(): Promise<VotingDashboardData> {
+    const res = await api.get('/voting/dashboard');
+    return res.data;
+  },
+
+  async getVotingCategories(): Promise<CategoryItem[]> {
+    const res = await api.get('/voting/categories');
+    return res.data;
+  },
+
+  async createCategory(data: Partial<CategoryItem>): Promise<CategoryItem> {
+    const res = await api.post('/voting/categories', data);
+    return res.data;
+  },
+
+  async updateCategory(id: string, data: Partial<CategoryItem>): Promise<CategoryItem> {
+    const res = await api.put(`/voting/categories/${id}`, data);
+    return res.data;
+  },
+
+  async getVotingCandidates(categoryId?: string): Promise<CandidateItem[]> {
+    const res = await api.get('/voting/candidates', { params: { categoryId } });
+    return res.data;
+  },
+
+  async createCandidate(data: any): Promise<CandidateItem> {
+    const res = await api.post('/voting/candidates', data);
+    return res.data;
+  },
+
+  async updateCandidate(id: string, data: any): Promise<CandidateItem> {
+    const res = await api.put(`/voting/candidates/${id}`, data);
+    return res.data;
+  },
+
+  async associatePostsToCategory(postIds: string[], categoryId: string): Promise<any> {
+    const res = await api.post('/voting/posts/associate', { postIds, categoryId });
+    return res.data;
+  },
+
+  async processCategoryVotes(categoryId: string): Promise<CategoryResultData> {
+    const res = await api.post(`/voting/process/${categoryId}`);
+    return res.data;
+  },
+
+  async getCategoryResults(categoryId: string): Promise<CategoryResultData> {
+    const res = await api.get(`/voting/results/${categoryId}`);
+    return res.data;
+  },
+
+  async getCandidateDetail(candidateId: string): Promise<CandidateDetailData> {
+    const res = await api.get(`/voting/candidate/${candidateId}`);
+    return res.data;
+  },
+
+  async getVotingComments(params: {
+    categoryId?: string;
+    candidateId?: string;
+    status?: string;
+    platform?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<PaginatedResponse<VotingCommentItem>> {
+    const res = await api.get('/voting/comments', { params });
+    return res.data;
+  },
+
+  async auditVote(data: {
+    voteRecordId: string;
+    newStatus: string;
+    newCandidateId?: string | null;
+    changedBy?: string;
+    reason: string;
+  }): Promise<any> {
+    const res = await api.post('/voting/audit-vote', data);
+    return res.data;
+  },
+
+  async importCommentsCsv(data: {
+    csvContent: string;
+    postId?: string;
+    categoryId?: string;
+    socialAccountId?: string;
+  }): Promise<any> {
+    const res = await api.post('/voting/import-csv', data);
+    return res.data;
+  },
+
+  getVotingCsvExportUrl(categoryId: string): string {
+    return `/api/voting/export/${categoryId}/csv`;
   },
 };

@@ -11,10 +11,18 @@ import {
   Activity,
   CheckCircle2,
   X,
+  Trophy,
+  Award,
+  ShieldCheck,
+  FolderKanban,
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 export type NavTab =
+  | 'voting-dashboard'
+  | 'categories-results'
+  | 'voting-audit'
+  | 'contest-mgmt'
   | 'dashboard'
   | 'analytics'
   | 'posts'
@@ -39,7 +47,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   isDemoMode,
 }) => {
-  const navItems: Array<{
+  const votingNavItems: Array<{
+    id: NavTab;
+    label: string;
+    icon: React.ReactNode;
+    badge?: string;
+  }> = [
+    {
+      id: 'voting-dashboard',
+      label: 'Conteo y Métricas',
+      icon: <Trophy className="w-4 h-4" />,
+      badge: 'ÉBANO',
+    },
+    {
+      id: 'categories-results',
+      label: 'Resultados por Categoría',
+      icon: <Award className="w-4 h-4" />,
+    },
+    {
+      id: 'voting-audit',
+      label: 'Auditoría de Votos',
+      icon: <ShieldCheck className="w-4 h-4" />,
+    },
+    {
+      id: 'contest-mgmt',
+      label: 'Gestión Convocatoria',
+      icon: <FolderKanban className="w-4 h-4" />,
+    },
+  ];
+
+  const metaNavItems: Array<{
     id: NavTab;
     label: string;
     icon: React.ReactNode;
@@ -52,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'analytics',
-      label: 'Analítica',
+      label: 'Analítica Meta',
       icon: <BarChart3 className="w-4 h-4" />,
     },
     {
@@ -122,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </span>
               </div>
               <span className="text-[10px] text-text-muted font-medium block">
-                Meta Analytics Suite
+                Meta Analytics & Votos
               </span>
             </div>
           </div>
@@ -136,36 +173,77 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation List */}
-        <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Plataforma Principal
+        <div className="flex-1 py-4 px-3 space-y-4 overflow-y-auto">
+          {/* Seccion 1: Convocatoria Ebano */}
+          <div>
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block animate-pulse"></span>
+              Convocatoria Ébano
+            </div>
+            <div className="space-y-1">
+              {votingNavItems.map((item) => {
+                const isActive = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-amber-50 text-amber-900 font-semibold shadow-2xs border border-amber-200/90'
+                        : 'text-slate-700 hover:text-slate-900 hover:bg-amber-50/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={isActive ? 'text-amber-600' : 'text-slate-400'}>
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded-full tracking-wide">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          {navItems.map((item) => {
-            const isActive = currentTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-brand-50 text-brand-700 font-semibold shadow-2xs border border-brand-100/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={isActive ? 'text-brand-600' : 'text-slate-400'}>
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className="text-[10px] bg-brand-100 text-brand-700 font-semibold px-1.5 py-0.5 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+
+          {/* Seccion 2: Plataforma Meta */}
+          <div>
+            <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Plataforma Meta
+            </div>
+            <div className="space-y-1">
+              {metaNavItems.map((item) => {
+                const isActive = currentTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-brand-50 text-brand-700 font-semibold shadow-2xs border border-brand-100/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={isActive ? 'text-brand-600' : 'text-slate-400'}>
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="text-[10px] bg-brand-100 text-brand-700 font-semibold px-1.5 py-0.5 rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Platform Status Widget in Sidebar footer */}

@@ -168,3 +168,188 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+// ==========================================
+// TIPOS DEL MÓDULO DE VOTACIÓN ÉBANO
+// ==========================================
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  edition: string;
+  description: string | null;
+  votingPolicy: 'EVERY_VALID_COMMENT' | 'ONE_PER_USER_AND_CANDIDATE' | 'ONE_PER_USER_PER_CATEGORY';
+  status: 'PROVISIONAL' | 'DEFINITIVE';
+  allowMultipleMentions: boolean;
+  createdAt: string;
+  _count?: {
+    candidates: number;
+    posts: number;
+  };
+}
+
+export interface CandidateItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  number: number | null;
+  aliasList: string[];
+  photoUrl: string | null;
+  bio: string | null;
+  status: string;
+  category?: {
+    name: string;
+    slug: string;
+  };
+}
+
+export interface CategoryResultData {
+  categoryId: string;
+  categoryName: string;
+  categoryStatus: 'PROVISIONAL' | 'DEFINITIVE';
+  votingPolicy: string;
+  totalCommentsAnalyzed: number;
+  totalValidVotes: number;
+  totalDiscardedComments: number;
+  totalRepeatedComments: number;
+  totalFacebookVotes: number;
+  totalInstagramVotes: number;
+  leader: {
+    id: string;
+    name: string;
+    totalVotes: number;
+    photoUrl?: string | null;
+  } | null;
+  candidatesRanking: Array<{
+    id: string;
+    name: string;
+    number: number | null;
+    photoUrl: string | null;
+    bio: string | null;
+    status: string;
+    facebookVotes: number;
+    instagramVotes: number;
+    totalVotes: number;
+    percentage: number;
+    rank: number;
+    differenceFromLeader: number;
+    isWinner: boolean;
+  }>;
+  repeatedCommentsSummary: Array<{
+    text: string;
+    frequency: number;
+    candidateName: string | null;
+    status: string;
+  }>;
+  discardReasonsSummary: Record<string, number>;
+}
+
+export interface CandidateDetailData {
+  candidate: {
+    id: string;
+    name: string;
+    number: number | null;
+    photoUrl: string | null;
+    bio: string | null;
+    status: string;
+    aliasList: string[];
+    category: {
+      id: string;
+      name: string;
+      edition: string;
+      status: string;
+    };
+  };
+  stats: {
+    facebookVotes: number;
+    instagramVotes: number;
+    totalVotes: number;
+    percentage: number;
+    rank: number;
+    differenceFromLeader: number;
+    isWinner: boolean;
+    totalCommentsReceived: number;
+    duplicateCommentsCount: number;
+    discardedCount: number;
+  };
+  horizontalBarData: Array<{
+    network: string;
+    votos: number;
+    fill: string;
+  }>;
+  timeline: Array<{
+    date: string;
+    facebook: number;
+    instagram: number;
+    total: number;
+  }>;
+  recentComments: Array<{
+    id: string;
+    commentId: string;
+    author: string;
+    text: string;
+    platform: string;
+    date: string;
+    status: string;
+    discardReason: string | null;
+  }>;
+}
+
+export interface VotingDashboardData {
+  totalCategories: number;
+  totalCandidates: number;
+  totalCommentsReceived: number;
+  totalValidVotes: number;
+  totalRepeatedComments: number;
+  totalFacebookVotes: number;
+  totalInstagramVotes: number;
+  topCandidateOverall: {
+    id: string;
+    name: string;
+    totalVotes: number;
+    photoUrl?: string | null;
+    categoryName: string;
+  } | null;
+  platformDistribution: {
+    facebook: { count: number; percentage: number };
+    instagram: { count: number; percentage: number };
+  };
+  categories: Array<{
+    id: string;
+    name: string;
+    edition: string;
+    status: string;
+    votingPolicy: string;
+    candidatesCount: number;
+    totalVotes: number;
+    leader: {
+      id: string;
+      name: string;
+      totalVotes: number;
+      photoUrl?: string | null;
+    } | null;
+    topCandidates: Array<{
+      id: string;
+      name: string;
+      totalVotes: number;
+      photoUrl?: string | null;
+    }>;
+  }>;
+}
+
+export interface VotingCommentItem {
+  id: string;
+  text: string;
+  authorName: string;
+  platform: 'FACEBOOK' | 'INSTAGRAM';
+  commentDate: string;
+  postTitle: string;
+  categoryName: string;
+  voteRecordId: string | null;
+  voteStatus: string;
+  candidate: { id: string; name: string; number: number | null } | null;
+  discardReason: string | null;
+  manualNotes: string | null;
+}
+
