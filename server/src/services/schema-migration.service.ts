@@ -315,7 +315,36 @@ class SchemaMigrationService {
         // Silencioso
       }
 
-      // 13. Auto-población de datos si categories está vacío
+      // 13. Convertir cualquier columna con enum previo a tipo TEXT estándar para compatibilidad con Prisma
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ALTER COLUMN "platform" TYPE TEXT USING "platform"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ALTER COLUMN "tokenStatus" TYPE TEXT USING "tokenStatus"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ALTER COLUMN "platform" TYPE TEXT USING "platform"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ALTER COLUMN "platform" TYPE TEXT USING "platform"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ALTER COLUMN "status" TYPE TEXT USING "status"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "users" ALTER COLUMN "role" TYPE TEXT USING "role"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "sync_jobs" ALTER COLUMN "status" TYPE TEXT USING "status"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "sync_jobs" ALTER COLUMN "triggerSource" TYPE TEXT USING "triggerSource"::TEXT;`);
+      } catch {}
+      try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "sync_logs" ALTER COLUMN "level" TYPE TEXT USING "level"::TEXT;`);
+      } catch {}
+
+      // 14. Auto-población de datos si categories está vacío
       const count = await prisma.category.count();
       if (count === 0) {
         console.log('🌱 Base de datos vacía en Supabase. Ejecutando seed de Convocatoria Ébano...');
