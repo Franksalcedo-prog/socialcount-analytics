@@ -67,14 +67,20 @@ class SchemaMigrationService {
           "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
       `);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "name" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "username" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "platform" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "externalId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "userId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "encryptedAccessToken" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "profilePictureUrl" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "tokenExpiresAt" TIMESTAMP(3);`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "tokenStatus" TEXT DEFAULT 'ACTIVE';`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "permissions" TEXT DEFAULT '[]';`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "isMonitored" BOOLEAN DEFAULT true;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "lastSyncAt" TIMESTAMP(3);`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
       applied.push('social_accounts');
 
       // 3. Tablas Base: social_posts
@@ -98,12 +104,20 @@ class SchemaMigrationService {
         );
       `);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "socialAccountId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "platform" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "externalId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "permalink" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "message" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "mediaType" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "mediaUrl" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "categoryId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "apiCommentsCount" INTEGER DEFAULT 0;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "repliesCount" INTEGER DEFAULT 0;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "totalStoredComments" INTEGER DEFAULT 0;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "lastSyncAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
       applied.push('social_posts');
 
       // 4. Tablas Base: social_comments
@@ -129,15 +143,20 @@ class SchemaMigrationService {
       `);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "postId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "socialAccountId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "platform" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "externalId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "parentCommentId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "authorName" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "authorExternalId" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "authorProfilePic" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "text" TEXT;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "commentDate" TIMESTAMP(3);`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "isReply" BOOLEAN DEFAULT false;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "replyCount" INTEGER DEFAULT 0;`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'VERIFIED';`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "capturedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
       applied.push('social_comments');
 
       // 5. Tablas Base: sync_jobs, sync_logs, audit_logs
