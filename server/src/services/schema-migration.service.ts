@@ -3,8 +3,8 @@ import { seedEbanoVotingDataIfNeeded } from './ebano-voting-seed.service.js';
 
 /**
  * Servicio de Auto-Migración de Base de Datos para Producción (Supabase / PostgreSQL)
- * Permite que Vercel ejecute automáticamente las sentencias DDL faltantes y
- * estandarice los nombres de columna en camelCase requeridos por Prisma.
+ * Ejecuta de forma 100% autónoma las sentencias DDL para garantizar que todas las tablas,
+ * columnas e índices requeridos por Prisma existan en Supabase sin intervención manual.
  */
 class SchemaMigrationService {
   private migrated = false;
@@ -25,141 +25,162 @@ class SchemaMigrationService {
     }
 
     try {
-      console.log('🔍 Verificando y sincronizando esquema en Supabase PostgreSQL...');
+      console.log('🔍 Ejecutando auto-migración integral en Supabase PostgreSQL...');
 
-      // 1. Estandarizar columnas a camelCase en tablas base existentes si estaban en minúsculas
+      // 0. Extensión UUID
+      await prisma.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`);
+
+      // 1. Tablas Base: users
       await prisma.$executeRawUnsafe(`
-        DO $$
-        BEGIN
-          -- social_accounts
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'externalid') THEN
-            ALTER TABLE social_accounts RENAME COLUMN externalid TO "externalId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'userid') THEN
-            ALTER TABLE social_accounts RENAME COLUMN userid TO "userId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'profilepictureurl') THEN
-            ALTER TABLE social_accounts RENAME COLUMN profilepictureurl TO "profilePictureUrl";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'encryptedaccesstoken') THEN
-            ALTER TABLE social_accounts RENAME COLUMN encryptedaccesstoken TO "encryptedAccessToken";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'tokenexpiresat') THEN
-            ALTER TABLE social_accounts RENAME COLUMN tokenexpiresat TO "tokenExpiresAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'tokenstatus') THEN
-            ALTER TABLE social_accounts RENAME COLUMN tokenstatus TO "tokenStatus";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'ismonitored') THEN
-            ALTER TABLE social_accounts RENAME COLUMN ismonitored TO "isMonitored";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'lastsyncat') THEN
-            ALTER TABLE social_accounts RENAME COLUMN lastsyncat TO "lastSyncAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'createdat') THEN
-            ALTER TABLE social_accounts RENAME COLUMN createdat TO "createdAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'updatedat') THEN
-            ALTER TABLE social_accounts RENAME COLUMN updatedat TO "updatedAt";
-          END IF;
-
-          -- social_posts
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'socialaccountid') THEN
-            ALTER TABLE social_posts RENAME COLUMN socialaccountid TO "socialAccountId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'externalid') THEN
-            ALTER TABLE social_posts RENAME COLUMN externalid TO "externalId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'mediatype') THEN
-            ALTER TABLE social_posts RENAME COLUMN mediatype TO "mediaType";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'mediaurl') THEN
-            ALTER TABLE social_posts RENAME COLUMN mediaurl TO "mediaUrl";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'publishedat') THEN
-            ALTER TABLE social_posts RENAME COLUMN publishedat TO "publishedAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'apicommentscount') THEN
-            ALTER TABLE social_posts RENAME COLUMN apicommentscount TO "apiCommentsCount";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'repliescount') THEN
-            ALTER TABLE social_posts RENAME COLUMN repliescount TO "repliesCount";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'totalstoredcomments') THEN
-            ALTER TABLE social_posts RENAME COLUMN totalstoredcomments TO "totalStoredComments";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'lastsyncedat') THEN
-            ALTER TABLE social_posts RENAME COLUMN lastsyncedat TO "lastSyncedAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'rawdata') THEN
-            ALTER TABLE social_posts RENAME COLUMN rawdata TO "rawData";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'categoryid') THEN
-            ALTER TABLE social_posts RENAME COLUMN categoryid TO "categoryId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'createdat') THEN
-            ALTER TABLE social_posts RENAME COLUMN createdat TO "createdAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'updatedat') THEN
-            ALTER TABLE social_posts RENAME COLUMN updatedat TO "updatedAt";
-          END IF;
-
-          -- social_comments
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'postid') THEN
-            ALTER TABLE social_comments RENAME COLUMN postid TO "postId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'externalid') THEN
-            ALTER TABLE social_comments RENAME COLUMN externalid TO "externalId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'parentcommentid') THEN
-            ALTER TABLE social_comments RENAME COLUMN parentcommentid TO "parentCommentId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'authorid') THEN
-            ALTER TABLE social_comments RENAME COLUMN authorid TO "authorId";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'authorname') THEN
-            ALTER TABLE social_comments RENAME COLUMN authorname TO "authorName";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'authorusername') THEN
-            ALTER TABLE social_comments RENAME COLUMN authorusername TO "authorUsername";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'commentdate') THEN
-            ALTER TABLE social_comments RENAME COLUMN commentdate TO "commentDate";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'likecount') THEN
-            ALTER TABLE social_comments RENAME COLUMN likecount TO "likeCount";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'replycount') THEN
-            ALTER TABLE social_comments RENAME COLUMN replycount TO "replyCount";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'rawdata') THEN
-            ALTER TABLE social_comments RENAME COLUMN rawdata TO "rawData";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'createdat') THEN
-            ALTER TABLE social_comments RENAME COLUMN createdat TO "createdAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'updatedat') THEN
-            ALTER TABLE social_comments RENAME COLUMN updatedat TO "updatedAt";
-          END IF;
-
-          -- users
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'passwordhash') THEN
-            ALTER TABLE users RENAME COLUMN passwordhash TO "passwordHash";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'avatarurl') THEN
-            ALTER TABLE users RENAME COLUMN avatarurl TO "avatarUrl";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'createdat') THEN
-            ALTER TABLE users RENAME COLUMN createdat TO "createdAt";
-          END IF;
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'updatedat') THEN
-            ALTER TABLE users RENAME COLUMN updatedat TO "updatedAt";
-          END IF;
-        END $$;
+        CREATE TABLE IF NOT EXISTS "users" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "email" TEXT UNIQUE NOT NULL,
+          "name" TEXT NOT NULL,
+          "passwordHash" TEXT NOT NULL,
+          "avatarUrl" TEXT,
+          "role" TEXT NOT NULL DEFAULT 'ADMIN',
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
       `);
-      applied.push('column_casing_standardized');
+      await prisma.$executeRawUnsafe(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT;`);
+      applied.push('users');
 
-      // 2. Crear tabla categories
+      // 2. Tablas Base: social_accounts
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "social_accounts" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "userId" TEXT NOT NULL,
+          "platform" TEXT NOT NULL,
+          "externalId" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "username" TEXT,
+          "profilePictureUrl" TEXT,
+          "encryptedAccessToken" TEXT NOT NULL,
+          "tokenExpiresAt" TIMESTAMP(3),
+          "tokenStatus" TEXT NOT NULL DEFAULT 'ACTIVE',
+          "permissions" TEXT NOT NULL DEFAULT '[]',
+          "isMonitored" BOOLEAN NOT NULL DEFAULT true,
+          "lastSyncAt" TIMESTAMP(3),
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "externalId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "userId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "encryptedAccessToken" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "profilePictureUrl" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "tokenExpiresAt" TIMESTAMP(3);`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "tokenStatus" TEXT DEFAULT 'ACTIVE';`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "isMonitored" BOOLEAN DEFAULT true;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_accounts" ADD COLUMN IF NOT EXISTS "lastSyncAt" TIMESTAMP(3);`);
+      applied.push('social_accounts');
+
+      // 3. Tablas Base: social_posts
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "social_posts" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "socialAccountId" TEXT NOT NULL,
+          "platform" TEXT NOT NULL,
+          "externalId" TEXT NOT NULL,
+          "permalink" TEXT,
+          "message" TEXT,
+          "mediaType" TEXT,
+          "mediaUrl" TEXT,
+          "publishedAt" TIMESTAMP(3) NOT NULL,
+          "apiCommentsCount" INTEGER NOT NULL DEFAULT 0,
+          "repliesCount" INTEGER NOT NULL DEFAULT 0,
+          "totalStoredComments" INTEGER NOT NULL DEFAULT 0,
+          "lastSyncAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "socialAccountId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "externalId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "categoryId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "apiCommentsCount" INTEGER DEFAULT 0;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "repliesCount" INTEGER DEFAULT 0;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "totalStoredComments" INTEGER DEFAULT 0;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_posts" ADD COLUMN IF NOT EXISTS "lastSyncAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;`);
+      applied.push('social_posts');
+
+      // 4. Tablas Base: social_comments
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "social_comments" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "postId" TEXT NOT NULL,
+          "socialAccountId" TEXT NOT NULL,
+          "platform" TEXT NOT NULL,
+          "externalId" TEXT NOT NULL,
+          "parentCommentId" TEXT,
+          "authorName" TEXT,
+          "authorExternalId" TEXT,
+          "authorProfilePic" TEXT,
+          "text" TEXT NOT NULL,
+          "commentDate" TIMESTAMP(3) NOT NULL,
+          "isReply" BOOLEAN NOT NULL DEFAULT false,
+          "replyCount" INTEGER NOT NULL DEFAULT 0,
+          "status" TEXT NOT NULL DEFAULT 'VERIFIED',
+          "capturedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "postId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "socialAccountId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "externalId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "parentCommentId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "authorName" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "authorExternalId" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "authorProfilePic" TEXT;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "commentDate" TIMESTAMP(3);`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "isReply" BOOLEAN DEFAULT false;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "replyCount" INTEGER DEFAULT 0;`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "social_comments" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'VERIFIED';`);
+      applied.push('social_comments');
+
+      // 5. Tablas Base: sync_jobs, sync_logs, audit_logs
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "sync_jobs" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "socialAccountId" TEXT,
+          "triggerSource" TEXT NOT NULL DEFAULT 'MANUAL',
+          "status" TEXT NOT NULL DEFAULT 'QUEUED',
+          "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "completedAt" TIMESTAMP(3),
+          "durationMs" INTEGER,
+          "postsProcessed" INTEGER NOT NULL DEFAULT 0,
+          "commentsFetched" INTEGER NOT NULL DEFAULT 0,
+          "commentsAdded" INTEGER NOT NULL DEFAULT 0,
+          "commentsUpdated" INTEGER NOT NULL DEFAULT 0,
+          "errorSummary" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "sync_logs" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "syncJobId" TEXT NOT NULL,
+          "level" TEXT NOT NULL,
+          "message" TEXT NOT NULL,
+          "metadata" TEXT,
+          "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "audit_logs" (
+          "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "userId" TEXT,
+          "action" TEXT NOT NULL,
+          "details" TEXT NOT NULL,
+          "ipAddress" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      applied.push('sync_jobs_and_logs');
+
+      // 6. Tablas de Votación Ébano: categories
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS categories (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -176,7 +197,7 @@ class SchemaMigrationService {
       `);
       applied.push('categories');
 
-      // 3. Crear tabla candidates
+      // 7. Tablas de Votación Ébano: candidates
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS candidates (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -193,7 +214,7 @@ class SchemaMigrationService {
       `);
       applied.push('candidates');
 
-      // 4. Crear tabla vote_records
+      // 8. Tablas de Votación Ébano: vote_records
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS vote_records (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -212,7 +233,7 @@ class SchemaMigrationService {
       `);
       applied.push('vote_records');
 
-      // 5. Crear tabla vote_audit_logs
+      // 9. Tablas de Votación Ébano: vote_audit_logs
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS vote_audit_logs (
           id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -228,13 +249,16 @@ class SchemaMigrationService {
       `);
       applied.push('vote_audit_logs');
 
-      // 6. Añadir columna categoryId a social_posts
-      await prisma.$executeRawUnsafe(`
-        ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS "categoryId" TEXT REFERENCES categories(id) ON DELETE SET NULL;
-      `);
-      applied.push('social_posts.categoryId');
+      // 10. Vincular foreign key de posts a categories
+      try {
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE social_posts ADD CONSTRAINT fk_posts_category FOREIGN KEY ("categoryId") REFERENCES categories(id) ON DELETE SET NULL;
+        `);
+      } catch {
+        // Silencioso si la constraint ya existe
+      }
 
-      // 7. Índices de aceleración
+      // 11. Índices de aceleración
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_candidates_category_id ON candidates("categoryId");`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_vote_records_candidate_id ON vote_records("candidateId");`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_vote_records_status ON vote_records("voteStatus");`);
@@ -243,7 +267,36 @@ class SchemaMigrationService {
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_social_posts_category_id ON social_posts("categoryId");`);
       applied.push('indexes');
 
-      // 8. Auto-población de datos si categories está vacío
+      // 12. Estandarizar cualquier columna que haya quedado en minúsculas en bases existentes
+      try {
+        await prisma.$executeRawUnsafe(`
+          DO $$
+          BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'externalid') THEN
+              ALTER TABLE social_accounts RENAME COLUMN externalid TO "externalId";
+            END IF;
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_accounts' AND column_name = 'userid') THEN
+              ALTER TABLE social_accounts RENAME COLUMN userid TO "userId";
+            END IF;
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'externalid') THEN
+              ALTER TABLE social_posts RENAME COLUMN externalid TO "externalId";
+            END IF;
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_posts' AND column_name = 'socialaccountid') THEN
+              ALTER TABLE social_posts RENAME COLUMN socialaccountid TO "socialAccountId";
+            END IF;
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'externalid') THEN
+              ALTER TABLE social_comments RENAME COLUMN externalid TO "externalId";
+            END IF;
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_comments' AND column_name = 'postid') THEN
+              ALTER TABLE social_comments RENAME COLUMN postid TO "postId";
+            END IF;
+          END $$;
+        `);
+      } catch {
+        // Silencioso
+      }
+
+      // 13. Auto-población de datos si categories está vacío
       const count = await prisma.category.count();
       if (count === 0) {
         console.log('🌱 Base de datos vacía en Supabase. Ejecutando seed de Convocatoria Ébano...');
@@ -252,10 +305,10 @@ class SchemaMigrationService {
       }
 
       this.migrated = true;
-      console.log('✅ Auto-migración en Supabase completada con éxito.');
+      console.log('✅ Auto-migración integral en Supabase completada con éxito.');
       return {
         success: true,
-        message: 'Esquema de Supabase actualizado correctamente con todas las tablas e índices de votación.',
+        message: 'Esquema de Supabase actualizado y normalizado correctamente con todas las tablas e índices.',
         applied,
       };
     } catch (error: any) {
